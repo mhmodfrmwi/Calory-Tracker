@@ -1,46 +1,35 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import ListingSection from "./components/calorieRecordSection/ListingSection";
 import CaloriesRecordEdit from "./components/edit/CaloriesRecordEdit";
 import Modal from "react-modal";
 import styles from "./App.module.css";
 import {getDateFromString} from "./utils";
 
-const INITIAL_RECORDS = [
-	{
-		id: 1,
-		date: new Date(2023, 2, 1),
-		meal: "Breakfast",
-		content: "Eggs",
-		calories: -200,
-	},
-	{
-		id: 2,
-		date: new Date(2023, 2, 2),
-		meal: "Lunch",
-		content: "Chicken",
-		calories: 600,
-	},
-	{
-		id: 3,
-		date: new Date(2023, 2, 3),
-		meal: "Dinner",
-		content: "Cheese",
-		calories: 200,
-	},
-	{
-		id: 4,
-		date: new Date(2023, 2, 4),
-		meal: "Snack",
-		content: "Chocolate",
-		calories: 500,
-	},
-];
+const LOCAL_STORAGE_KEY="caloriesRecords";
 
 function App() {
-	const [records, setRecords] = useState(INITIAL_RECORDS);
-	const [nextId, setNextId] = useState(5);
+	const [records, setRecords] = useState([]);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const saveTolocalStorage=(record)=>{
+		const records = JSON.parse(localStorage.getItem('caloriesRecords')) || [];
+		records.push(record);
+		localStorage.setItem('caloriesRecords', JSON.stringify(records));
+		console.log(records);
+	}
+	const getRecords=()=>{
+		const records = JSON.parse(localStorage.getItem('caloriesRecords')) || [];
+        return records;
+	}
 
+	useEffect(()=>{
+		setRecords(getRecords().map((record)=>{
+			return {
+                ...record,
+                date: new Date(record.date),
+                id: record.id,
+            }
+		}));
+	},[])
 	const modalStyles = {
 		content: {
 			top: "50%",
@@ -70,11 +59,12 @@ function App() {
 		const formattedRecord = {
 			...record,
 			date: getDateFromString(record.date),
-			id: nextId,
-		};
-		setNextId((lastValue) => lastValue + 1);
-		setRecords([formattedRecord, ...records]);
+			id: crypto.randomUUID(),
 
+		};
+
+		setRecords([formattedRecord, ...records]);
+		saveTolocalStorage(formattedRecord);
 		handleCloseModal();
 	};
 
